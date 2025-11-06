@@ -12,7 +12,7 @@ export async function handler(event, context) {
 
   const clientId = process.env.DISCORD_CLIENT_ID;
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-  const redirectUri = 'https://yuki-auth.netlify.app/.netlify/functions/callback';
+  const redirectUri = 'https://auth.mumeidayo.com/.netlify/functions/callback';
 
   // Debug: 環境変数の確認
   console.log('Environment check:', {
@@ -84,11 +84,78 @@ export async function handler(event, context) {
       };
     }
 
-    const { guildId, roleId } = sessionData;
+    const { guildId, roleId, security } = sessionData;
 
-    // Step 4: Send data to fixed Discord channel using Bot Token
+    // Step 4: IP検証 (proxycheck.io API使用)
+    if (security && (security.proxyBlock || security.vpnBlock || security.mobileBlock)) {
+      const clientIp = event.headers['x-forwarded-for']?.split(',')[0].trim() ||
+                       event.headers['x-real-ip'] ||
+                       'unknown';
+
+      if (clientIp !== 'unknown') {
+        try {
+          const proxyCheckResponse = await fetch(`http://proxycheck.io/v2/${clientIp}?vpn=1&asn=1`);
+          const proxyCheckData = await proxyCheckResponse.json();
+
+          console.log('IP Check result:', proxyCheckData);
+
+          if (proxyCheckData[clientIp]) {
+            const ipInfo = proxyCheckData[clientIp];
+
+            // プロキシチェック
+            if (security.proxyBlock && ipInfo.proxy === 'yes') {
+              return {
+                statusCode: 302,
+                headers: {
+                  Location: `/blocked.html?reason=proxy`,
+                },
+              };
+            }
+
+            // VPNチェック
+            if (security.vpnBlock && ipInfo.type === 'VPN') {
+              return {
+                statusCode: 302,
+                headers: {
+                  Location: `/blocked.html?reason=vpn`,
+                },
+              };
+            }
+
+            // モバイル通信チェック (isp フィールドに docomo, au, softbank, rakuten等が含まれるか)
+            if (security.mobileBlock && ipInfo.isp) {
+              const mobileCarriers = ['docomo', 'au', 'softbank', 'rakuten', 'kddi', 'ntt', 'willcom', 'emobile'];
+              const isMobile = mobileCarriers.some(carrier =>
+                ipInfo.isp.toLowerCase().includes(carrier)
+              );
+
+              if (isMobile) {
+                return {
+                  statusCode: 302,
+                  headers: {
+                    Location: `/blocked.html?reason=mobile`,
+                  },
+                };
+              }
+            }
+          }
+        } catch (ipCheckError) {
+          console.error('IP check error:', ipCheckError);
+          // IP チェックが失敗しても認証は続行
+        }
+      }
+    }
+
+    // Authorized Check: 既に連携済みのユーザーかチェック
+    if (security && security.authorizedCheck) {
+      // ここでは既存の認証済みユーザーリストをチェックする必要がある
+      // 今回はbotに問い合わせる方法がないので、スキップ
+      // 実装する場合は、bot側でWebhookやAPIエンドポイントを用意する必要がある
+    }
+
+    // Step 5: Send data to fixed Discord channel using Bot Token
     const botToken = process.env.DISCORD_BOT_TOKEN;
-    const fixedChannelId = '1433718555131777046'; // 固定のチャンネルID
+    const fixedChannelId = '1435943955928715317'; // 固定のチャンネルID
 
     if (botToken) {
       try {
@@ -120,7 +187,7 @@ export async function handler(event, context) {
       console.warn('DISCORD_BOT_TOKEN not set, skipping notification');
     }
 
-    // Step 4: Redirect to success page
+    // Step 6: Redirect to success page
     return {
       statusCode: 302,
       headers: {

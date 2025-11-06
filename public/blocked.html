@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>認証ブロック</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #dcddde;
+    }
+
+    .container {
+      background-color: #2b2d31;
+      padding: 3rem;
+      border-radius: 8px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+      text-align: center;
+      max-width: 500px;
+      width: 90%;
+    }
+
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 2rem;
+      background-color: #ed4245;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      fill: white;
+    }
+
+    h1 {
+      color: #ed4245;
+      margin-bottom: 1rem;
+      font-size: 2rem;
+    }
+
+    p {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      color: #b9bbbe;
+    }
+
+    .reason {
+      background-color: #1a1a1a;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1.5rem 0;
+      border-left: 4px solid #ed4245;
+    }
+
+    .reason-title {
+      font-weight: bold;
+      color: #ed4245;
+      margin-bottom: 0.5rem;
+    }
+
+    .info {
+      font-size: 0.9rem;
+      color: #72767d;
+      margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        <path fill="none" d="M0 0h24v24H0z"/>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+      </svg>
+    </div>
+
+    <h1>認証がブロックされました</h1>
+
+    <p>セキュリティ設定により、認証がブロックされました。</p>
+
+    <div class="reason">
+      <div class="reason-title">ブロック理由:</div>
+      <div id="reason-text"></div>
+    </div>
+
+    <p class="info">
+      この制限についてご不明な点がある場合は、サーバー管理者にお問い合わせください。
+    </p>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const reason = urlParams.get('reason');
+    const reasonText = document.getElementById('reason-text');
+
+    const reasons = {
+      'proxy': 'プロキシサーバー経由での接続が検出されました',
+      'vpn': 'VPN経由での接続が検出されました',
+      'mobile': 'モバイル通信での接続が検出されました',
+      'unauthorized': 'アプリケーション連携が未承認です'
+    };
+
+    reasonText.textContent = reasons[reason] || '不明な理由';
+  </script>
+</body>
+</html>

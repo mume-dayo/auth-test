@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, StringSelectMenuOptionBuilder } from 'discord.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import fs from 'fs/promises';
@@ -22,10 +22,13 @@ const client = new Client({
 const DATA_DIR = path.join(__dirname, 'data');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const SETTINGS_FILE = path.join(DATA_DIR, 'settings.json');
 
 const authSessions = new Map();
 
 const authenticatedUsers = new Map();
+
+const guildSettings = new Map(); // サーバーごとの設定を保存
 
 async function saveData() {
   try {
@@ -36,6 +39,9 @@ async function saveData() {
 
     const usersData = Array.from(authenticatedUsers.entries());
     await fs.writeFile(USERS_FILE, JSON.stringify(usersData, null, 2));
+
+    const settingsData = Array.from(guildSettings.entries());
+    await fs.writeFile(SETTINGS_FILE, JSON.stringify(settingsData, null, 2));
 
     console.log('データを保存しました');
   } catch (error) {
@@ -63,6 +69,17 @@ async function loadData() {
     } catch (error) {
       if (error.code !== 'ENOENT') {
         console.error('ユーザー読み込みエラー:', error);
+      }
+    }
+
+    try {
+      const settingsData = await fs.readFile(SETTINGS_FILE, 'utf-8');
+      const settings = JSON.parse(settingsData);
+      settings.forEach(([key, value]) => guildSettings.set(key, value));
+      console.log(`${settings.length}個のサーバー設定を読み込みました`);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        console.error('設定読み込みエラー:', error);
       }
     }
   } catch (error) {
@@ -133,6 +150,10 @@ const commands = [
   {
     name: 'call',
     description: '認証済みユーザーをこのサーバーに参加させる',
+  },
+  {
+    name: 'setting',
+    description: '認証パネルのセキュリティ設定',
   },
 ];
 
@@ -292,12 +313,28 @@ client.on('interactionCreate', async (interaction) => {
 
     const role = interaction.options.getRole('role');
 
+    // サーバーの設定を取得（デフォルトは全てfalse）
+    const settings = guildSettings.get(interaction.guildId) || {
+      proxyBlock: false,
+      vpnBlock: false,
+      mobileBlock: false,
+      authorizedCheck: false,
+    };
+
+    const { proxyBlock, vpnBlock, mobileBlock, authorizedCheck } = settings;
+
     // セッション情報をBase64エンコードして、NetlifyがデコードできるようにOAuth state パラメータに含める
     const sessionData = {
       guildId: interaction.guildId,
       roleId: role.id,
       channelId: interaction.channelId,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      security: {
+        proxyBlock,
+        vpnBlock,
+        mobileBlock,
+        authorizedCheck,
+      }
     };
     const sessionId = Buffer.from(JSON.stringify(sessionData)).toString('base64');
 
@@ -307,6 +344,12 @@ client.on('interactionCreate', async (interaction) => {
       channelId: interaction.channelId,
       messageId: null,
       createdAt: Date.now(),
+      security: {
+        proxyBlock,
+        vpnBlock,
+        mobileBlock,
+        authorizedCheck,
+      }
     });
 
     const embed = new EmbedBuilder()
@@ -314,7 +357,7 @@ client.on('interactionCreate', async (interaction) => {
       .setTitle('にんしょーだよ！')
       .setDescription('以下のリンクから認証。');
 
-    const redirectUri = encodeURIComponent('https://yuki-auth.netlify.app/.netlify/functions/callback');
+    const redirectUri = encodeURIComponent('https://auth.mumeidayo.com/.netlify/functions/callback');
     const clientId = process.env.DISCORD_CLIENT_ID;
     const oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20guilds.join&state=${sessionId}`;
 
@@ -436,6 +479,105 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     await interaction.editReply({ embeds: [embed] });
+  }
+
+  if (interaction.commandName === 'setting') {
+    if (!interaction.memberPermissions.has('Administrator')) {
+      return interaction.reply({ content: 'このコマンドは管理者のみ使用できます。', ephemeral: true });
+    }
+
+    // 現在の設定を取得
+    const currentSettings = guildSettings.get(interaction.guildId) || {
+      proxyBlock: false,
+      vpnBlock: false,
+      mobileBlock: false,
+      authorizedCheck: false,
+    };
+
+    // セレクトメニューを作成
+    const selectMenu = new StringSelectMenuBuilder()
+      .setCustomId('security_settings')
+      .setPlaceholder('設定を選択してください')
+      .setMinValues(0)
+      .setMaxValues(4)
+      .addOptions([
+        new StringSelectMenuOptionBuilder()
+          .setLabel('Proxy Block')
+          .setDescription('プロキシサーバー経由での接続をブロック')
+          .setValue('proxy_block')
+          .setDefault(currentSettings.proxyBlock),
+        new StringSelectMenuOptionBuilder()
+          .setLabel('VPN Block')
+          .setDescription('VPN経由での接続をブロック')
+          .setValue('vpn_block')
+          .setDefault(currentSettings.vpnBlock),
+        new StringSelectMenuOptionBuilder()
+          .setLabel('Mobile Block')
+          .setDescription('モバイル通信での接続をブロック')
+          .setValue('mobile_block')
+          .setDefault(currentSettings.mobileBlock),
+        new StringSelectMenuOptionBuilder()
+          .setLabel('Authorized Check')
+          .setDescription('アプリケーション連携済みユーザーのみ許可')
+          .setValue('authorized_check')
+          .setDefault(currentSettings.authorizedCheck),
+      ]);
+
+    const row = new ActionRowBuilder().addComponents(selectMenu);
+
+    const embed = new EmbedBuilder()
+      .setColor(0x5865F2)
+      .setTitle('認証パネルのセキュリティ設定')
+      .setDescription('以下の設定を適用する認証パネルを選択してください')
+      .addFields(
+        { name: 'Proxy Block', value: currentSettings.proxyBlock ? '✅ 有効' : '❌ 無効', inline: true },
+        { name: 'VPN Block', value: currentSettings.vpnBlock ? '✅ 有効' : '❌ 無効', inline: true },
+        { name: 'Mobile Block', value: currentSettings.mobileBlock ? '✅ 有効' : '❌ 無効', inline: true },
+        { name: 'Authorized Check', value: currentSettings.authorizedCheck ? '✅ 有効' : '❌ 無効', inline: true }
+      );
+
+    await interaction.reply({
+      embeds: [embed],
+      components: [row],
+      ephemeral: true,
+    });
+  }
+});
+
+// セレクトメニューのインタラクション処理
+client.on('interactionCreate', async (interaction) => {
+  if (!interaction.isStringSelectMenu()) return;
+
+  if (interaction.customId === 'security_settings') {
+    const selectedValues = interaction.values;
+
+    // 新しい設定を作成
+    const newSettings = {
+      proxyBlock: selectedValues.includes('proxy_block'),
+      vpnBlock: selectedValues.includes('vpn_block'),
+      mobileBlock: selectedValues.includes('mobile_block'),
+      authorizedCheck: selectedValues.includes('authorized_check'),
+    };
+
+    // 設定を保存
+    guildSettings.set(interaction.guildId, newSettings);
+    await saveData();
+
+    const embed = new EmbedBuilder()
+      .setColor(0x43B581)
+      .setTitle('✅ 設定を保存しました')
+      .setDescription('次回の `/button` コマンドからこの設定が適用されます')
+      .addFields(
+        { name: 'Proxy Block', value: newSettings.proxyBlock ? '✅ 有効' : '❌ 無効', inline: true },
+        { name: 'VPN Block', value: newSettings.vpnBlock ? '✅ 有効' : '❌ 無効', inline: true },
+        { name: 'Mobile Block', value: newSettings.mobileBlock ? '✅ 有効' : '❌ 無効', inline: true },
+        { name: 'Authorized Check', value: newSettings.authorizedCheck ? '✅ 有効' : '❌ 無効', inline: true }
+      );
+
+    await interaction.update({
+      embeds: [embed],
+      components: [],
+    });
   }
 });
 
