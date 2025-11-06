@@ -12,7 +12,7 @@ export async function handler(event, context) {
 
   const clientId = process.env.DISCORD_CLIENT_ID;
   const clientSecret = process.env.DISCORD_CLIENT_SECRET;
-  const redirectUri = 'https://auth.mumeidayo.com/.netlify/functions/callback';
+  const redirectUri = 'https://inspiring-genie-4c1aff.netlify.app/.netlify/functions/callback';
 
   // Debug: 環境変数の確認
   console.log('Environment check:', {
