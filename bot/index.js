@@ -357,7 +357,8 @@ client.on('interactionCreate', async (interaction) => {
       .setTitle('にんしょーだよ！')
       .setDescription('以下のリンクから認証。');
 
-    const redirectUri = encodeURIComponent('https://inspiring-genie-4c1aff.netlify.app/.netlify/functions/callback');
+    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+    const redirectUri = encodeURIComponent(`${webUrl}/callback`);
     const clientId = process.env.DISCORD_CLIENT_ID;
     const oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20guilds.join&state=${sessionId}`;
 

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "bot": "node index.js",
-    "dev": "netlify dev",
+    "web": "node server.js",
     "build": "echo 'Build completed successfully'"
   },
   "keywords": ["discord", "oauth2", "bot", "netlify"],

@@ -1,0 +1,18 @@
+[
+  [
+    "eyJndWlsZElkIjoiMTQzNTk0Mzk1NTI1MzY5MDM3MyIsInJvbGVJZCI6IjE0MzU5NzgyNTU5NDg3MTQwNTQiLCJjaGFubmVsSWQiOiIxNDM1OTQzOTU1OTI4NzE1MzE3IiwidGltZXN0YW1wIjoxNzYyNDM0MzAwNjA2LCJzZWN1cml0eSI6eyJwcm94eUJsb2NrIjpmYWxzZSwidnBuQmxvY2siOmZhbHNlLCJtb2JpbGVCbG9jayI6ZmFsc2UsImF1dGhvcml6ZWRDaGVjayI6ZmFsc2V9fQ==",
+    {
+      "guildId": "1435943955253690373",
+      "roleId": "1435978255948714054",
+      "channelId": "1435943955928715317",
+      "messageId": null,
+      "createdAt": 1762434300607,
+      "security": {
+        "proxyBlock": false,
+        "vpnBlock": false,
+        "mobileBlock": false,
+        "authorizedCheck": false
+      }
+    }
+  ]
+]
