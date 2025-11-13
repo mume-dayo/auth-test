@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import * as supabaseLib from '../lib/supabase.js';
 
 dotenv.config();
 
@@ -43,18 +44,56 @@ async function saveData() {
     const settingsData = Array.from(guildSettings.entries());
     await fs.writeFile(SETTINGS_FILE, JSON.stringify(settingsData, null, 2));
 
-    console.log('データを保存しました');
+    // Supabaseにも保存
+    for (const [sessionId, sessionData] of authSessions) {
+      await supabaseLib.saveSession(sessionId, sessionData);
+    }
+
+    for (const [userId, userData] of authenticatedUsers) {
+      await supabaseLib.saveUser(userId, userData);
+    }
+
+    for (const [guildId, settings] of guildSettings) {
+      await supabaseLib.saveGuildSettings(guildId, settings);
+    }
+
+    console.log('データを保存しました（ローカル & Supabase）');
   } catch (error) {
     console.error('データ保存エラー:', error);
   }
 }
 async function loadData() {
   try {
+    // まずSupabaseから読み込み
+    const supabaseSessions = await supabaseLib.getAllSessions();
+    const supabaseUsers = await supabaseLib.getAllUsers();
+    const supabaseSettings = await supabaseLib.getAllGuildSettings();
+
+    if (supabaseSessions.length > 0) {
+      supabaseSessions.forEach(([key, value]) => authSessions.set(key, value));
+      console.log(`Supabaseから${supabaseSessions.length}件のセッションを読み込みました`);
+    }
+
+    if (supabaseUsers.length > 0) {
+      supabaseUsers.forEach(([key, value]) => authenticatedUsers.set(key, value));
+      console.log(`Supabaseから${supabaseUsers.length}人の認証ユーザーを読み込みました`);
+    }
+
+    if (supabaseSettings.length > 0) {
+      supabaseSettings.forEach(([key, value]) => guildSettings.set(key, value));
+      console.log(`Supabaseから${supabaseSettings.length}個のサーバー設定を読み込みました`);
+    }
+
+    // ローカルファイルからも読み込み（Supabaseが使えない場合のフォールバック）
     try {
       const sessionsData = await fs.readFile(SESSIONS_FILE, 'utf-8');
       const sessions = JSON.parse(sessionsData);
-      sessions.forEach(([key, value]) => authSessions.set(key, value));
-      console.log(`${sessions.length}件のセッションを読み込みました`);
+      sessions.forEach(([key, value]) => {
+        if (!authSessions.has(key)) {
+          authSessions.set(key, value);
+        }
+      });
+      console.log(`ローカルから${sessions.length}件のセッションを読み込みました`);
     } catch (error) {
       if (error.code !== 'ENOENT') {
         console.error('セッション読み込みエラー:', error);
@@ -64,8 +103,12 @@ async function loadData() {
     try {
       const usersData = await fs.readFile(USERS_FILE, 'utf-8');
       const users = JSON.parse(usersData);
-      users.forEach(([key, value]) => authenticatedUsers.set(key, value));
-      console.log(`${users.length}人の認証ユーザーを読み込みました`);
+      users.forEach(([key, value]) => {
+        if (!authenticatedUsers.has(key)) {
+          authenticatedUsers.set(key, value);
+        }
+      });
+      console.log(`ローカルから${users.length}人の認証ユーザーを読み込みました`);
     } catch (error) {
       if (error.code !== 'ENOENT') {
         console.error('ユーザー読み込みエラー:', error);
@@ -75,8 +118,12 @@ async function loadData() {
     try {
       const settingsData = await fs.readFile(SETTINGS_FILE, 'utf-8');
       const settings = JSON.parse(settingsData);
-      settings.forEach(([key, value]) => guildSettings.set(key, value));
-      console.log(`${settings.length}個のサーバー設定を読み込みました`);
+      settings.forEach(([key, value]) => {
+        if (!guildSettings.has(key)) {
+          guildSettings.set(key, value);
+        }
+      });
+      console.log(`ローカルから${settings.length}個のサーバー設定を読み込みました`);
     } catch (error) {
       if (error.code !== 'ENOENT') {
         console.error('設定読み込みエラー:', error);
@@ -133,6 +180,11 @@ async function refreshAccessToken(userId) {
 }
 
 setInterval(saveData, 5 * 60 * 1000);
+
+// 1時間ごとに古いセッションをクリーンアップ
+setInterval(async () => {
+  await supabaseLib.cleanupOldSessions();
+}, 60 * 60 * 1000);
 
 const commands = [
   {

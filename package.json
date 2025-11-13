@@ -10,17 +10,23 @@
     "web": "node server.js",
     "build": "echo 'Build completed successfully'"
   },
-  "keywords": ["discord", "oauth2", "bot", "netlify"],
+  "keywords": [
+    "discord",
+    "oauth2",
+    "bot",
+    "netlify"
+  ],
   "author": "",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.81.1",
     "discord.js": "^14.14.1",
+    "dotenv": "^16.4.1",
     "express": "^4.18.2",
-    "node-fetch": "^3.3.2",
-    "dotenv": "^16.4.1"
+    "node-fetch": "^3.3.2"
   },
   "devDependencies": {
     "netlify-cli": "^17.0.0",
