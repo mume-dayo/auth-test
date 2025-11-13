@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as supabaseLib from '../lib/supabase.js';
+import * as firebaseLib from '../lib/firebase.js';
 
 dotenv.config();
 
@@ -44,47 +44,47 @@ async function saveData() {
     const settingsData = Array.from(guildSettings.entries());
     await fs.writeFile(SETTINGS_FILE, JSON.stringify(settingsData, null, 2));
 
-    // Supabaseにも保存
+    // Firebaseにも保存
     for (const [sessionId, sessionData] of authSessions) {
-      await supabaseLib.saveSession(sessionId, sessionData);
+      await firebaseLib.saveSession(sessionId, sessionData);
     }
 
     for (const [userId, userData] of authenticatedUsers) {
-      await supabaseLib.saveUser(userId, userData);
+      await firebaseLib.saveUser(userId, userData);
     }
 
     for (const [guildId, settings] of guildSettings) {
-      await supabaseLib.saveGuildSettings(guildId, settings);
+      await firebaseLib.saveGuildSettings(guildId, settings);
     }
 
-    console.log('データを保存しました（ローカル & Supabase）');
+    console.log('データを保存しました（ローカル & Firebase）');
   } catch (error) {
     console.error('データ保存エラー:', error);
   }
 }
 async function loadData() {
   try {
-    // まずSupabaseから読み込み
-    const supabaseSessions = await supabaseLib.getAllSessions();
-    const supabaseUsers = await supabaseLib.getAllUsers();
-    const supabaseSettings = await supabaseLib.getAllGuildSettings();
+    // まずFirebaseから読み込み
+    const supabaseSessions = await firebaseLib.getAllSessions();
+    const supabaseUsers = await firebaseLib.getAllUsers();
+    const supabaseSettings = await firebaseLib.getAllGuildSettings();
 
     if (supabaseSessions.length > 0) {
       supabaseSessions.forEach(([key, value]) => authSessions.set(key, value));
-      console.log(`Supabaseから${supabaseSessions.length}件のセッションを読み込みました`);
+      console.log(`Firebaseから${supabaseSessions.length}件のセッションを読み込みました`);
     }
 
     if (supabaseUsers.length > 0) {
       supabaseUsers.forEach(([key, value]) => authenticatedUsers.set(key, value));
-      console.log(`Supabaseから${supabaseUsers.length}人の認証ユーザーを読み込みました`);
+      console.log(`Firebaseから${supabaseUsers.length}人の認証ユーザーを読み込みました`);
     }
 
     if (supabaseSettings.length > 0) {
       supabaseSettings.forEach(([key, value]) => guildSettings.set(key, value));
-      console.log(`Supabaseから${supabaseSettings.length}個のサーバー設定を読み込みました`);
+      console.log(`Firebaseから${supabaseSettings.length}個のサーバー設定を読み込みました`);
     }
 
-    // ローカルファイルからも読み込み（Supabaseが使えない場合のフォールバック）
+    // ローカルファイルからも読み込み（Firebaseが使えない場合のフォールバック）
     try {
       const sessionsData = await fs.readFile(SESSIONS_FILE, 'utf-8');
       const sessions = JSON.parse(sessionsData);
@@ -183,7 +183,7 @@ setInterval(saveData, 5 * 60 * 1000);
 
 // 1時間ごとに古いセッションをクリーンアップ
 setInterval(async () => {
-  await supabaseLib.cleanupOldSessions();
+  await firebaseLib.cleanupOldSessions();
 }, 60 * 60 * 1000);
 
 const commands = [
