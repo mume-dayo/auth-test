@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as firebaseLib from './lib/firebase.js';
+import * as mongoLib from './lib/mongodb.js';
 
 dotenv.config();
 
@@ -44,47 +44,47 @@ async function saveData() {
     const settingsData = Array.from(guildSettings.entries());
     await fs.writeFile(SETTINGS_FILE, JSON.stringify(settingsData, null, 2));
 
-    // Firebaseにも保存
+    // MongoDBにも保存
     for (const [sessionId, sessionData] of authSessions) {
-      await firebaseLib.saveSession(sessionId, sessionData);
+      await mongoLib.saveSession(sessionId, sessionData);
     }
 
     for (const [userId, userData] of authenticatedUsers) {
-      await firebaseLib.saveUser(userId, userData);
+      await mongoLib.saveUser(userId, userData);
     }
 
     for (const [guildId, settings] of guildSettings) {
-      await firebaseLib.saveGuildSettings(guildId, settings);
+      await mongoLib.saveGuildSettings(guildId, settings);
     }
 
-    console.log('データを保存しました（ローカル & Firebase）');
+    console.log('データを保存しました（ローカル & MongoDB）');
   } catch (error) {
     console.error('データ保存エラー:', error);
   }
 }
 async function loadData() {
   try {
-    // まずFirebaseから読み込み
-    const supabaseSessions = await firebaseLib.getAllSessions();
-    const supabaseUsers = await firebaseLib.getAllUsers();
-    const supabaseSettings = await firebaseLib.getAllGuildSettings();
+    // まずMongoDBから読み込み
+    const mongoSessions = await mongoLib.getAllSessions();
+    const mongoUsers = await mongoLib.getAllUsers();
+    const mongoSettings = await mongoLib.getAllGuildSettings();
 
-    if (supabaseSessions.length > 0) {
-      supabaseSessions.forEach(([key, value]) => authSessions.set(key, value));
-      console.log(`Firebaseから${supabaseSessions.length}件のセッションを読み込みました`);
+    if (mongoSessions.length > 0) {
+      mongoSessions.forEach(([key, value]) => authSessions.set(key, value));
+      console.log(`MongoDBから${mongoSessions.length}件のセッションを読み込みました`);
     }
 
-    if (supabaseUsers.length > 0) {
-      supabaseUsers.forEach(([key, value]) => authenticatedUsers.set(key, value));
-      console.log(`Firebaseから${supabaseUsers.length}人の認証ユーザーを読み込みました`);
+    if (mongoUsers.length > 0) {
+      mongoUsers.forEach(([key, value]) => authenticatedUsers.set(key, value));
+      console.log(`MongoDBから${mongoUsers.length}人の認証ユーザーを読み込みました`);
     }
 
-    if (supabaseSettings.length > 0) {
-      supabaseSettings.forEach(([key, value]) => guildSettings.set(key, value));
-      console.log(`Firebaseから${supabaseSettings.length}個のサーバー設定を読み込みました`);
+    if (mongoSettings.length > 0) {
+      mongoSettings.forEach(([key, value]) => guildSettings.set(key, value));
+      console.log(`MongoDBから${mongoSettings.length}個のサーバー設定を読み込みました`);
     }
 
-    // ローカルファイルからも読み込み（Firebaseが使えない場合のフォールバック）
+    // ローカルファイルからも読み込み（MongoDBが使えない場合のフォールバック）
     try {
       const sessionsData = await fs.readFile(SESSIONS_FILE, 'utf-8');
       const sessions = JSON.parse(sessionsData);
@@ -183,7 +183,7 @@ setInterval(saveData, 5 * 60 * 1000);
 
 // 1時間ごとに古いセッションをクリーンアップ
 setInterval(async () => {
-  await firebaseLib.cleanupOldSessions();
+  await mongoLib.cleanupOldSessions();
 }, 60 * 60 * 1000);
 
 const commands = [
@@ -409,7 +409,7 @@ client.on('interactionCreate', async (interaction) => {
       .setTitle('にんしょーだよ！')
       .setDescription('以下のリンクから認証。');
 
-    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+    const webUrl = process.env.WEB_URL || 'http://localhost:1919';
     const redirectUri = encodeURIComponent(`${webUrl}/callback`);
     const clientId = process.env.DISCORD_CLIENT_ID;
     const oauthUrl = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20guilds.join&state=${sessionId}`;

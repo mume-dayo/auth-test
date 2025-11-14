@@ -14,5 +14,37 @@
         "authorizedCheck": false
       }
     }
+  ],
+  [
+    "eyJndWlsZElkIjoiMTQzODgzMjI3OTYzOTE2NzAzMCIsInJvbGVJZCI6IjE0Mzg4Mzk5MzMzNzU2MTEwNTMiLCJjaGFubmVsSWQiOiIxNDM4ODMyMjgwMjYzOTgzMTM4IiwidGltZXN0YW1wIjoxNzYzMTE2NjM2MTQ5LCJzZWN1cml0eSI6eyJwcm94eUJsb2NrIjpmYWxzZSwidnBuQmxvY2siOmZhbHNlLCJtb2JpbGVCbG9jayI6ZmFsc2UsImF1dGhvcml6ZWRDaGVjayI6ZmFsc2V9fQ==",
+    {
+      "guildId": "1438832279639167030",
+      "roleId": "1438839933375611053",
+      "channelId": "1438832280263983138",
+      "messageId": "1438840201236578374",
+      "createdAt": 1763116636149,
+      "security": {
+        "proxyBlock": false,
+        "vpnBlock": false,
+        "mobileBlock": false,
+        "authorizedCheck": false
+      }
+    }
+  ],
+  [
+    "eyJndWlsZElkIjoiMTQzODgzMjI3OTYzOTE2NzAzMCIsInJvbGVJZCI6IjE0Mzg4Mzk5MzMzNzU2MTEwNTMiLCJjaGFubmVsSWQiOiIxNDM4ODMyMjgwMjYzOTgzMTM4IiwidGltZXN0YW1wIjoxNzYzMTE2NzU4NDQ5LCJzZWN1cml0eSI6eyJwcm94eUJsb2NrIjpmYWxzZSwidnBuQmxvY2siOmZhbHNlLCJtb2JpbGVCbG9jayI6ZmFsc2UsImF1dGhvcml6ZWRDaGVjayI6ZmFsc2V9fQ==",
+    {
+      "guildId": "1438832279639167030",
+      "roleId": "1438839933375611053",
+      "channelId": "1438832280263983138",
+      "messageId": "1438840715244208222",
+      "createdAt": 1763116758449,
+      "security": {
+        "proxyBlock": false,
+        "vpnBlock": false,
+        "mobileBlock": false,
+        "authorizedCheck": false
+      }
+    }
   ]
 ]
