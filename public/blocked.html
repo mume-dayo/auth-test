@@ -207,7 +207,7 @@
       'proxy': 'プロキシサーバー経由での接続が検出されました',
       'vpn': 'VPN経由での接続が検出されました',
       'mobile': 'モバイル通信での接続が検出されました',
-      'unauthorized': 'アプリケーション連携が未承認です'
+      'unauthorized': 'このIPアドレスでは既に認証済みです。同じIPアドレスからの多重認証はブロックされます'
     };
 
     reasonText.textContent = reasons[reason] || '不明な理由';

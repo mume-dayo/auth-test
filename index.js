@@ -272,14 +272,14 @@ client.on('messageCreate', async (message) => {
       return;
     }
 
-    const { userId, sessionId, guildId, roleId, accessToken, refreshToken, expiresIn } = data;
+    const { userId, sessionId, guildId, roleId, accessToken, refreshToken, expiresIn, ipAddress } = data;
 
     // 必須フィールドのチェック
     if (!userId || !sessionId || !guildId || !roleId) {
       return; // 認証データでなければスキップ
     }
 
-    console.log(`認証データを受信: ユーザー${userId}, サーバー${guildId}, ロール${roleId}`);
+    console.log(`認証データを受信: ユーザー${userId}, サーバー${guildId}, ロール${roleId}, IP: ${ipAddress || 'unknown'}`);
 
     const session = authSessions.get(sessionId);
 
@@ -294,10 +294,12 @@ client.on('messageCreate', async (message) => {
         accessToken,
         refreshToken: refreshToken || null,
         sessionId,
+        guildId,
+        ipAddress: ipAddress || 'unknown',
         authenticatedAt: Date.now(),
         expiresAt: expiresIn ? Date.now() + (expiresIn * 1000) : null,
       });
-      console.log(`ユーザー${userId}の認証情報を保存しました`);
+      console.log(`ユーザー${userId}の認証情報を保存しました (IP: ${ipAddress || 'unknown'})`);
 
       await saveData();
     }
@@ -572,7 +574,7 @@ client.on('interactionCreate', async (interaction) => {
           .setDefault(currentSettings.mobileBlock),
         new StringSelectMenuOptionBuilder()
           .setLabel('Authorized Check')
-          .setDescription('アプリケーション連携済みユーザーのみ許可')
+          .setDescription('同一IPアドレスからの多重認証をブロック')
           .setValue('authorized_check')
           .setDefault(currentSettings.authorizedCheck),
       ]);
@@ -715,13 +717,27 @@ app.get('/callback', async (req, res) => {
 
     const { guildId, roleId, security } = sessionData;
 
-    // Step 4: IP検証 (proxycheck.io API使用)
-    if (security && (security.proxyBlock || security.vpnBlock || security.mobileBlock)) {
-      const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() ||
-                       req.headers['x-real-ip'] ||
-                       req.ip ||
-                       'unknown';
+    // IPアドレス取得
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+                     req.headers['x-real-ip'] ||
+                     req.ip ||
+                     'unknown';
 
+    // Step 4: Authorized Check - IP多重認証ブロック
+    if (security && security.authorizedCheck && clientIp !== 'unknown') {
+      // このIPアドレスで既に認証済みのユーザーがいるかチェック
+      const existingUser = Array.from(authenticatedUsers.values()).find(
+        user => user.ipAddress === clientIp && user.guildId === guildId
+      );
+
+      if (existingUser) {
+        console.log(`Blocked: Duplicate IP authentication detected - IP: ${clientIp}, Existing User: ${existingUser.userId}`);
+        return res.redirect(`/blocked.html?reason=unauthorized`);
+      }
+    }
+
+    // Step 5: IP検証 (proxycheck.io API使用)
+    if (security && (security.proxyBlock || security.vpnBlock || security.mobileBlock)) {
       if (clientIp !== 'unknown') {
         try {
           const proxyCheckResponse = await fetch(`http://proxycheck.io/v2/${clientIp}?vpn=1&asn=1`);
@@ -777,6 +793,7 @@ app.get('/callback', async (req, res) => {
           accessToken: access_token,
           refreshToken: refresh_token,
           expiresIn: expires_in,
+          ipAddress: clientIp,
         };
 
         await fetch(`https://discord.com/api/v10/channels/${fixedChannelId}/messages`, {
