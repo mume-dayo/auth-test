@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as firebaseLib from '../lib/firebase.js';
+import * as firebaseLib from './lib/firebase.js';
 
 dotenv.config();
 
