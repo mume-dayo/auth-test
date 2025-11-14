@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>認証ブロック</title>
+  <title>認証ブロック - member bu</title>
   <style>
     * {
       margin: 0;
@@ -13,97 +13,189 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #1a1a1a;
+      background: #1a1a1a;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
-      color: #dcddde;
+      padding: 20px;
     }
 
     .container {
-      background-color: #2b2d31;
-      padding: 3rem;
-      border-radius: 8px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
-      text-align: center;
+      background: #2b2d31;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
       max-width: 500px;
-      width: 90%;
+      width: 100%;
+      padding: 60px 40px;
+      text-align: center;
+      animation: slideIn 0.5s ease-out;
     }
 
-    .icon {
-      width: 80px;
-      height: 80px;
-      margin: 0 auto 2rem;
-      background-color: #ed4245;
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-icon {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 30px;
+      background: #ed4245;
       border-radius: 50%;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
+      animation: scaleIn 0.5s ease-out 0.2s both;
     }
 
-    .icon svg {
-      width: 40px;
-      height: 40px;
-      fill: white;
+    @keyframes scaleIn {
+      from {
+        transform: scale(0);
+      }
+      to {
+        transform: scale(1);
+      }
+    }
+
+    .error-icon svg {
+      width: 50px;
+      height: 50px;
+      stroke: white;
+      stroke-width: 3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     h1 {
-      color: #ed4245;
-      margin-bottom: 1rem;
-      font-size: 2rem;
+      color: #ffffff;
+      font-size: 32px;
+      margin-bottom: 15px;
+      font-weight: 700;
     }
 
-    p {
-      font-size: 1.1rem;
-      line-height: 1.6;
-      margin-bottom: 1rem;
+    .message {
       color: #b9bbbe;
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 30px;
     }
 
-    .reason {
-      background-color: #1a1a1a;
-      padding: 1rem;
-      border-radius: 4px;
-      margin: 1.5rem 0;
+    .info-box {
+      background: #1e1f22;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+      text-align: left;
       border-left: 4px solid #ed4245;
     }
 
-    .reason-title {
-      font-weight: bold;
+    .info-box h3 {
       color: #ed4245;
-      margin-bottom: 0.5rem;
+      font-size: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
     }
 
-    .info {
-      font-size: 0.9rem;
+    .info-box h3::before {
+      content: "⚠";
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      background: #ed4245;
+      color: white;
+      border-radius: 50%;
+      margin-right: 10px;
+      text-align: center;
+      line-height: 24px;
+      font-size: 14px;
+    }
+
+    .info-box p {
+      color: #b9bbbe;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-left: 34px;
+    }
+
+    .close-button {
+      background: #5865f2;
+      color: white;
+      border: none;
+      padding: 15px 40px;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+    }
+
+    .close-button:hover {
+      background: #4752c4;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(88, 101, 242, 0.6);
+    }
+
+    .close-button:active {
+      transform: translateY(0);
+    }
+
+    .footer {
+      margin-top: 30px;
       color: #72767d;
-      margin-top: 2rem;
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 40px 20px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="icon">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        <path fill="none" d="M0 0h24v24H0z"/>
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+    <div class="error-icon">
+      <svg viewBox="0 0 52 52">
+        <path d="M26 16v12M26 36v.01"/>
       </svg>
     </div>
 
     <h1>認証がブロックされました</h1>
 
-    <p>セキュリティ設定により、認証がブロックされました。</p>
+    <p class="message">
+      セキュリティ設定により、認証がブロックされました。
+    </p>
 
-    <div class="reason">
-      <div class="reason-title">ブロック理由:</div>
-      <div id="reason-text"></div>
+    <div class="info-box">
+      <h3>ブロック理由</h3>
+      <p id="reason-text"></p>
     </div>
 
-    <p class="info">
+    <p class="message">
       この制限についてご不明な点がある場合は、サーバー管理者にお問い合わせください。
     </p>
+
+    <button class="close-button" onclick="closeWindow()">
+      このページを閉じる
+    </button>
+
+    <div class="footer">
+      このウィンドウなんもないから閉じてね！
+    </div>
   </div>
 
   <script>
@@ -119,6 +211,33 @@
     };
 
     reasonText.textContent = reasons[reason] || '不明な理由';
+
+    function closeWindow() {
+      window.close();
+
+      setTimeout(() => {
+        const button = document.querySelector('.close-button');
+        button.textContent = 'Discordに戻ってください';
+        button.style.background = '#43b581';
+      }, 100);
+    }
+
+    setTimeout(() => {
+      const button = document.querySelector('.close-button');
+      let countdown = 10;
+      button.textContent = `${countdown}秒後に閉じます...`;
+
+      const interval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+          button.textContent = `${countdown}秒後に閉じます...`;
+        } else {
+          clearInterval(interval);
+          window.close();
+          button.textContent = 'Discordに戻ってください';
+        }
+      }, 1000);
+    }, 5000);
   </script>
 </body>
 </html>
