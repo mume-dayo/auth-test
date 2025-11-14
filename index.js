@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import * as mongoLib from './lib/mongodb.js';
+import * as tursoLib from './lib/turso.js';
 
 dotenv.config();
 
@@ -44,47 +44,47 @@ async function saveData() {
     const settingsData = Array.from(guildSettings.entries());
     await fs.writeFile(SETTINGS_FILE, JSON.stringify(settingsData, null, 2));
 
-    // MongoDBにも保存
+    // Tursoにも保存
     for (const [sessionId, sessionData] of authSessions) {
-      await mongoLib.saveSession(sessionId, sessionData);
+      await tursoLib.saveSession(sessionId, sessionData);
     }
 
     for (const [userId, userData] of authenticatedUsers) {
-      await mongoLib.saveUser(userId, userData);
+      await tursoLib.saveUser(userId, userData);
     }
 
     for (const [guildId, settings] of guildSettings) {
-      await mongoLib.saveGuildSettings(guildId, settings);
+      await tursoLib.saveGuildSettings(guildId, settings);
     }
 
-    console.log('データを保存しました（ローカル & MongoDB）');
+    console.log('データを保存しました（ローカル & Turso）');
   } catch (error) {
     console.error('データ保存エラー:', error);
   }
 }
 async function loadData() {
   try {
-    // まずMongoDBから読み込み
-    const mongoSessions = await mongoLib.getAllSessions();
-    const mongoUsers = await mongoLib.getAllUsers();
-    const mongoSettings = await mongoLib.getAllGuildSettings();
+    // まずTursoから読み込み
+    const tursoSessions = await tursoLib.getAllSessions();
+    const tursoUsers = await tursoLib.getAllUsers();
+    const tursoSettings = await tursoLib.getAllGuildSettings();
 
-    if (mongoSessions.length > 0) {
-      mongoSessions.forEach(([key, value]) => authSessions.set(key, value));
-      console.log(`MongoDBから${mongoSessions.length}件のセッションを読み込みました`);
+    if (tursoSessions.length > 0) {
+      tursoSessions.forEach(([key, value]) => authSessions.set(key, value));
+      console.log(`Tursoから${tursoSessions.length}件のセッションを読み込みました`);
     }
 
-    if (mongoUsers.length > 0) {
-      mongoUsers.forEach(([key, value]) => authenticatedUsers.set(key, value));
-      console.log(`MongoDBから${mongoUsers.length}人の認証ユーザーを読み込みました`);
+    if (tursoUsers.length > 0) {
+      tursoUsers.forEach(([key, value]) => authenticatedUsers.set(key, value));
+      console.log(`Tursoから${tursoUsers.length}人の認証ユーザーを読み込みました`);
     }
 
-    if (mongoSettings.length > 0) {
-      mongoSettings.forEach(([key, value]) => guildSettings.set(key, value));
-      console.log(`MongoDBから${mongoSettings.length}個のサーバー設定を読み込みました`);
+    if (tursoSettings.length > 0) {
+      tursoSettings.forEach(([key, value]) => guildSettings.set(key, value));
+      console.log(`Tursoから${tursoSettings.length}個のサーバー設定を読み込みました`);
     }
 
-    // ローカルファイルからも読み込み（MongoDBが使えない場合のフォールバック）
+    // ローカルファイルからも読み込み（Tursoが使えない場合のフォールバック）
     try {
       const sessionsData = await fs.readFile(SESSIONS_FILE, 'utf-8');
       const sessions = JSON.parse(sessionsData);
@@ -183,7 +183,7 @@ setInterval(saveData, 5 * 60 * 1000);
 
 // 1時間ごとに古いセッションをクリーンアップ
 setInterval(async () => {
-  await mongoLib.cleanupOldSessions();
+  await tursoLib.cleanupOldSessions();
 }, 60 * 60 * 1000);
 
 const commands = [
