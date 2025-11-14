@@ -407,12 +407,6 @@ client.on('interactionCreate', async (interaction) => {
       }
     });
 
-    // まず自分にしか見えないメッセージで確認
-    await interaction.reply({
-      content: '認証パネルを作成しました！',
-      ephemeral: true
-    });
-
     const embed = new EmbedBuilder()
       .setColor(0x5865F2)
       .setTitle('にんしょーだよ！')
@@ -430,6 +424,12 @@ client.on('interactionCreate', async (interaction) => {
           .setStyle(ButtonStyle.Link)
           .setURL(oauthUrl)
       );
+
+    // 先にインタラクションに応答（ephemeralで自分にしか見えない）
+    await interaction.reply({
+      content: '認証パネルを作成しました！',
+      flags: 64 // MessageFlags.Ephemeral
+    });
 
     // チャンネルに直接送信
     const message = await interaction.channel.send({
