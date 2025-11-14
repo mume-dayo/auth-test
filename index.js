@@ -727,18 +727,20 @@ app.get('/callback', async (req, res) => {
           const proxyCheckResponse = await fetch(`http://proxycheck.io/v2/${clientIp}?vpn=1&asn=1`);
           const proxyCheckData = await proxyCheckResponse.json();
 
-          console.log('IP Check result:', proxyCheckData);
+          console.log('IP Check result:', JSON.stringify(proxyCheckData, null, 2));
 
           if (proxyCheckData[clientIp]) {
             const ipInfo = proxyCheckData[clientIp];
 
             // プロキシチェック
             if (security.proxyBlock && ipInfo.proxy === 'yes') {
+              console.log('Blocked: Proxy detected');
               return res.redirect(`/blocked.html?reason=proxy`);
             }
 
-            // VPNチェック
-            if (security.vpnBlock && ipInfo.type === 'VPN') {
+            // VPNチェック (vpn フィールドが 'yes' または type が 'VPN')
+            if (security.vpnBlock && (ipInfo.vpn === 'yes' || ipInfo.type === 'VPN')) {
+              console.log('Blocked: VPN detected');
               return res.redirect(`/blocked.html?reason=vpn`);
             }
 
@@ -750,6 +752,7 @@ app.get('/callback', async (req, res) => {
               );
 
               if (isMobile) {
+                console.log('Blocked: Mobile carrier detected');
                 return res.redirect(`/blocked.html?reason=mobile`);
               }
             }
